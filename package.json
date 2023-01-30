@@ -1,0 +1,44 @@
+{
+	"name": "create-roblox-ts",
+	"description": "Create a roblox-ts project from a template",
+	"version": "2.0.0",
+	"author": "",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/roblox-ts/create-roblox-ts.git"
+	},
+	"bin": {
+		"create-roblox-ts": "out/index.js"
+	},
+	"scripts": {
+		"build": "tsc",
+		"eslint": "eslint \"src/**/*.ts\" --max-warnings 0"
+	},
+	"dependencies": {
+		"@types/fs-extra": "^11.0.1",
+		"ajv": "^8.12.0",
+		"fs-extra": "^11.1.0",
+		"lookpath": "^1.2.2",
+		"prompts": "^2.4.2",
+		"yargs": "^17.6.2"
+	},
+	"devDependencies": {
+		"@types/node": "^18.11.18",
+		"@types/prompts": "^2.4.2",
+		"@types/yargs": "^17.0.20",
+		"@typescript-eslint/eslint-plugin": "^5.49.0",
+		"@typescript-eslint/parser": "^5.49.0",
+		"eslint": "^8.33.0",
+		"eslint-config-prettier": "^8.6.0",
+		"eslint-plugin-deprecation": "^1.3.3",
+		"eslint-plugin-no-autofix": "^1.2.3",
+		"eslint-plugin-prettier": "^4.2.1",
+		"eslint-plugin-simple-import-sort": "^10.0.0",
+		"prettier": "^2.8.3"
+	},
+	"files": [
+		"out",
+		"templates"
+	]
+}
