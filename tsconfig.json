@@ -13,7 +13,8 @@
 		"removeComments": true,
 		"forceConsistentCasingInFileNames": true,
 		"composite": true,
+		"tsBuildInfoFile": "out/tsconfig.tsbuildinfo",
 		"sourceMap": true
 	},
-	"exclude": ["templates"]
+	"exclude": ["templates", "out"]
 }
