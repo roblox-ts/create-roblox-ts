@@ -73,7 +73,6 @@ function cmd(cmdStr: string) {
 	});
 }
 
-const COMPILER_VERSION = "2.1.0"; // TODO
 const RBXTS_SCOPE = "@rbxts";
 const PACKAGE_ROOT = path.join(__dirname, "..");
 const TEMPLATES_DIR = path.join(PACKAGE_ROOT, "templates");
@@ -273,8 +272,9 @@ async function init(argv: yargs.Arguments<InitOptions>, initMode: InitMode) {
 
 	await benchmark("Installing dependencies..", async () => {
 		const devDependencies = [
+			"roblox-ts",
 			"@rbxts/types",
-			`@rbxts/compiler-types@compiler-${COMPILER_VERSION}`,
+			`@rbxts/compiler-types`,
 			"typescript",
 		];
 
