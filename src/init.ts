@@ -274,7 +274,7 @@ async function init(argv: yargs.Arguments<InitOptions>, initMode: InitMode) {
 		const devDependencies = [
 			"roblox-ts",
 			"@rbxts/types",
-			`@rbxts/compiler-types`,
+			"@rbxts/compiler-types",
 			"typescript",
 		];
 
