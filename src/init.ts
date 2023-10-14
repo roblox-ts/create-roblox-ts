@@ -67,9 +67,7 @@ function cmd(cmdStr: string) {
 			resolve(stdout);
 		});
 	}).catch((error: ExecException) => {
-		throw new Error(
-			`Command "${error.cmd}" exited with code ${error.code}\n\n${error.message}`
-		);
+		throw new Error(`Command "${error.cmd}" exited with code ${error.code}\n\n${error.message}`);
 	});
 }
 
@@ -85,10 +83,8 @@ async function init(argv: yargs.Arguments<InitOptions>, initMode: InitMode) {
 	// Although npm is installed by default, it can be uninstalled
 	// and replaced by another manager, so check for it to make sure
 	const [npmAvailable, pnpmAvailable, yarnAvailable, gitAvailable] = (
-		await Promise.allSettled(
-			["npm", "pnpm", "yarn", "git"].map((v) => lookpath(v))
-		)
-	).map((v) => (v.status === "fulfilled" ? v.value !== undefined : true));
+		await Promise.allSettled(["npm", "pnpm", "yarn", "git"].map(v => lookpath(v)))
+	).map(v => (v.status === "fulfilled" ? v.value !== undefined : true));
 
 	const packageManagerExistance: { [K in PackageManager]: boolean } = {
 		[PackageManager.NPM]: npmAvailable,
@@ -96,9 +92,7 @@ async function init(argv: yargs.Arguments<InitOptions>, initMode: InitMode) {
 		[PackageManager.Yarn]: yarnAvailable,
 	};
 
-	const packageManagerCount = Object.values(packageManagerExistance).filter(
-		(exists) => exists
-	).length;
+	const packageManagerCount = Object.values(packageManagerExistance).filter(exists => exists).length;
 
 	const {
 		template = initMode,
@@ -120,75 +114,50 @@ async function init(argv: yargs.Arguments<InitOptions>, initMode: InitMode) {
 				type: () => initMode === InitMode.None && "select",
 				name: "template",
 				message: "Select template",
-				choices: [
-					InitMode.Game,
-					InitMode.Model,
-					InitMode.Plugin,
-					InitMode.Package,
-				].map((value) => ({
+				choices: [InitMode.Game, InitMode.Model, InitMode.Plugin, InitMode.Package].map(value => ({
 					title: value,
 					value,
 				})),
 				initial: 0,
 			},
 			{
-				type: () =>
-					argv.git === undefined &&
-					argv.yes === undefined &&
-					gitAvailable &&
-					"confirm",
+				type: () => argv.git === undefined && argv.yes === undefined && gitAvailable && "confirm",
 				name: "git",
 				message: "Configure Git",
 				initial: true,
 			},
 			{
-				type: () =>
-					argv.eslint === undefined &&
-					argv.yes === undefined &&
-					"confirm",
+				type: () => argv.eslint === undefined && argv.yes === undefined && "confirm",
 				name: "eslint",
 				message: "Configure ESLint",
 				initial: true,
 			},
 			{
-				type: () =>
-					argv.prettier === undefined &&
-					argv.yes === undefined &&
-					"confirm",
+				type: () => argv.prettier === undefined && argv.yes === undefined && "confirm",
 				name: "prettier",
 				message: "Configure Prettier",
 				initial: true,
 			},
 			{
-				type: () =>
-					argv.vscode === undefined &&
-					argv.yes === undefined &&
-					"confirm",
+				type: () => argv.vscode === undefined && argv.yes === undefined && "confirm",
 				name: "vscode",
 				message: "Configure VSCode Project Settings",
 				initial: true,
 			},
 			{
 				type: () =>
-					argv.packageManager === undefined &&
-					packageManagerCount > 1 &&
-					argv.yes === undefined &&
-					"select",
+					argv.packageManager === undefined && packageManagerCount > 1 && argv.yes === undefined && "select",
 				name: "packageManager",
-				message:
-					"Multiple package managers detected. Select package manager:",
+				message: "Multiple package managers detected. Select package manager:",
 				choices: Object.entries(PackageManager)
-					.filter(
-						([, packageManager]) =>
-							packageManagerExistance[packageManager]
-					)
+					.filter(([, packageManager]) => packageManagerExistance[packageManager])
 					.map(([managerDisplayName, managerEnum]) => ({
 						title: managerDisplayName,
 						value: managerEnum,
 					})),
 			},
 		],
-		{ onCancel: () => process.exit(1) }
+		{ onCancel: () => process.exit(1) },
 	);
 
 	const cwd = process.cwd();
@@ -214,23 +183,15 @@ async function init(argv: yargs.Arguments<InitOptions>, initMode: InitMode) {
 	for (const filePath of pathValues) {
 		if (filePath && (await fs.pathExists(filePath))) {
 			const stat = await fs.stat(filePath);
-			if (
-				stat.isFile() ||
-				stat.isSymbolicLink() ||
-				(await fs.readdir(filePath)).length > 0
-			) {
+			if (stat.isFile() || stat.isSymbolicLink() || (await fs.readdir(filePath)).length > 0) {
 				existingPaths.push(path.relative(cwd, filePath));
 			}
 		}
 	}
 
 	if (existingPaths.length > 0) {
-		const pathInfo = existingPaths
-			.map((v) => `  - ${kleur.yellow(v)}\n`)
-			.join("");
-		throw new Error(
-			`Cannot initialize project, process could overwrite:\n${pathInfo}`
-		);
+		const pathInfo = existingPaths.map(v => `  - ${kleur.yellow(v)}\n`).join("");
+		throw new Error(`Cannot initialize project, process could overwrite:\n${pathInfo}`);
 	}
 
 	const selectedPackageManager = packageManagerCommands[packageManager];
@@ -250,10 +211,7 @@ async function init(argv: yargs.Arguments<InitOptions>, initMode: InitMode) {
 			pkgJson.publishConfig = { access: "public" };
 			pkgJson.scripts.prepublishOnly = selectedPackageManager.build;
 		}
-		await fs.outputFile(
-			paths.packageJson,
-			JSON.stringify(pkgJson, null, 2)
-		);
+		await fs.outputFile(paths.packageJson, JSON.stringify(pkgJson, null, 2));
 	});
 
 	if (git) {
@@ -263,7 +221,7 @@ async function init(argv: yargs.Arguments<InitOptions>, initMode: InitMode) {
 			} catch (error) {
 				if (!(error instanceof Error)) throw error;
 				throw new Error(
-					`${error.message}\nDo you not have Git installed? Git CLI is required to use Git functionality. If you do not wish to use Git, answer no to "Configure Git".`
+					`${error.message}\nDo you not have Git installed? Git CLI is required to use Git functionality. If you do not wish to use Git, answer no to "Configure Git".`,
 				);
 			}
 			await fs.outputFile(paths.gitignore, GIT_IGNORE.join("\n") + "\n");
@@ -271,12 +229,7 @@ async function init(argv: yargs.Arguments<InitOptions>, initMode: InitMode) {
 	}
 
 	await benchmark("Installing dependencies..", async () => {
-		const devDependencies = [
-			"roblox-ts",
-			"@rbxts/types",
-			"@rbxts/compiler-types",
-			"typescript",
-		];
+		const devDependencies = ["roblox-ts", "@rbxts/types", "@rbxts/compiler-types", "typescript"];
 
 		if (prettier) {
 			devDependencies.push("prettier");
@@ -287,19 +240,14 @@ async function init(argv: yargs.Arguments<InitOptions>, initMode: InitMode) {
 				"eslint",
 				"@typescript-eslint/eslint-plugin",
 				"@typescript-eslint/parser",
-				"eslint-plugin-roblox-ts"
+				"eslint-plugin-roblox-ts",
 			);
 			if (prettier) {
-				devDependencies.push(
-					"eslint-config-prettier",
-					"eslint-plugin-prettier"
-				);
+				devDependencies.push("eslint-config-prettier", "eslint-plugin-prettier");
 			}
 		}
 
-		await cmd(
-			`${selectedPackageManager.devInstall} ${devDependencies.join(" ")}`
-		);
+		await cmd(`${selectedPackageManager.devInstall} ${devDependencies.join(" ")}`);
 	});
 
 	if (eslint) {
@@ -329,10 +277,7 @@ async function init(argv: yargs.Arguments<InitOptions>, initMode: InitMode) {
 				eslintConfig.rules["prettier/prettier"] = "warn";
 			}
 
-			await fs.outputFile(
-				paths.eslintrc,
-				JSON.stringify(eslintConfig, undefined, "\t")
-			);
+			await fs.outputFile(paths.eslintrc, JSON.stringify(eslintConfig, undefined, "\t"));
 		});
 	}
 
@@ -344,10 +289,7 @@ async function init(argv: yargs.Arguments<InitOptions>, initMode: InitMode) {
 				trailingComma: "all",
 				useTabs: true,
 			};
-			await fs.outputFile(
-				paths.prettierrc,
-				JSON.stringify(prettierConfig, undefined, "\t")
-			);
+			await fs.outputFile(paths.prettierrc, JSON.stringify(prettierConfig, undefined, "\t"));
 		});
 	}
 
@@ -390,14 +332,8 @@ async function init(argv: yargs.Arguments<InitOptions>, initMode: InitMode) {
 				});
 			}
 
-			await fs.outputFile(
-				paths.extensions,
-				JSON.stringify(extensions, undefined, "\t")
-			);
-			await fs.outputFile(
-				paths.settings,
-				JSON.stringify(settings, undefined, "\t")
-			);
+			await fs.outputFile(paths.extensions, JSON.stringify(extensions, undefined, "\t"));
+			await fs.outputFile(paths.settings, JSON.stringify(settings, undefined, "\t"));
 		});
 	}
 
@@ -446,21 +382,10 @@ export = {
 				choices: Object.values(PackageManager),
 				describe: "Choose an alternative package manager",
 			})
-			.command(
-				[InitMode.Game, InitMode.Place],
-				GAME_DESCRIPTION,
-				{},
-				(argv) => init(argv as never, InitMode.Game)
-			)
-			.command(InitMode.Model, MODEL_DESCRIPTION, {}, (argv) =>
-				init(argv as never, InitMode.Model)
-			)
-			.command(InitMode.Plugin, PLUGIN_DESCRIPTION, {}, (argv) =>
-				init(argv as never, InitMode.Plugin)
-			)
-			.command(InitMode.Package, PACKAGE_DESCRIPTION, {}, (argv) =>
-				init(argv as never, InitMode.Package)
-			),
-	handler: (argv) => init(argv, InitMode.None),
+			.command([InitMode.Game, InitMode.Place], GAME_DESCRIPTION, {}, argv => init(argv as never, InitMode.Game))
+			.command(InitMode.Model, MODEL_DESCRIPTION, {}, argv => init(argv as never, InitMode.Model))
+			.command(InitMode.Plugin, PLUGIN_DESCRIPTION, {}, argv => init(argv as never, InitMode.Plugin))
+			.command(InitMode.Package, PACKAGE_DESCRIPTION, {}, argv => init(argv as never, InitMode.Package)),
+	handler: argv => init(argv, InitMode.None),
 	// eslint-disable-next-line @typescript-eslint/ban-types
 } satisfies yargs.CommandModule<{}, InitOptions>;
