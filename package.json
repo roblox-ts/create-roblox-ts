@@ -12,6 +12,7 @@
 		"create-roblox-ts": "out/index.js"
 	},
 	"scripts": {
+		"prepublishOnly": "npm run build",
 		"build": "tsc",
 		"build-watch": "tsc -w",
 		"eslint": "eslint \"src/**/*.ts\" --max-warnings 0",
