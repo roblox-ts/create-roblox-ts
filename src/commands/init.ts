@@ -19,6 +19,7 @@ interface InitOptions {
 	prettier?: boolean;
 	vscode?: boolean;
 	packageManager?: PackageManager;
+	skipBuild?: boolean;
 }
 
 enum InitMode {
@@ -371,7 +372,9 @@ async function init(argv: yargs.Arguments<InitOptions>, initMode: InitMode) {
 		await fs.copy(templateDir, cwd);
 	});
 
-	await benchmark("Compiling..", () => cmd("npm run build", cwd));
+	if (!argv.skipBuild) {
+		await benchmark("Compiling..", () => cmd(selectedPackageManager.build, cwd));
+	}
 }
 
 const GAME_DESCRIPTION = "Generate a Roblox place";
@@ -427,6 +430,10 @@ export = {
 			.option("packageManager", {
 				choices: Object.values(PackageManager),
 				describe: "Choose an alternative package manager",
+			})
+			.option("skipBuild", {
+				boolean: true,
+				describe: "Do not run build script",
 			})
 
 			.command([InitMode.Game, InitMode.Place], GAME_DESCRIPTION, {}, argv => init(argv as never, InitMode.Game))
