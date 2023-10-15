@@ -12,11 +12,6 @@ jobs:
     strategy:
       matrix:
         type: [game, place, model, plugin, package]
-        git: [true, false]
-        eslint: [true, false]
-        prettier: [true, false]
-        vscode: [true, false]
-        packageManager: [npm, yarn]
     steps:
       - name: Checkout create-roblox-ts repo
         uses: actions/checkout@v4
@@ -30,11 +25,4 @@ jobs:
           npm run build
 
       - name: Create template project
-        run: |
-          node ./create-roblox-ts/out/index.js ${{ matrix.type }} \
-            --dir project \
-            --git=${{ matrix.git }} \
-            --eslint=${{ matrix.eslint }} \
-            --prettier=${{ matrix.prettier }} \
-            --vscode=${{ matrix.vscode }} \
-            --packageManager=${{ matrix.packageManager }}
+        run: node ./create-roblox-ts/out/index.js ${{ matrix.type }} -y --dir project
