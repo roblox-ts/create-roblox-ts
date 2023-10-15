@@ -391,6 +391,14 @@ export = {
 				string: true,
 				describe: "roblox-ts compiler version",
 			})
+			.check(argv => {
+				if (argv.compilerVersion !== undefined && !/^\d+\.\d+\.\d+$/.test(argv.compilerVersion)) {
+					throw new InitError(
+						"Invalid --compilerVersion. You must specify a version in the form of X.X.X. (i.e. --compilerVersion 1.2.3)",
+					);
+				}
+				return true;
+			}, true)
 			.option("dir", {
 				string: true,
 				describe: "Project directory",
@@ -420,14 +428,6 @@ export = {
 				choices: Object.values(PackageManager),
 				describe: "Choose an alternative package manager",
 			})
-			.check(argv => {
-				if (argv.compilerVersion !== undefined && !/^\d+\.\d+\.\d+$/.test(argv.compilerVersion)) {
-					throw new InitError(
-						"Invalid --compilerVersion. You must specify a version in the form of X.X.X. (i.e. --compilerVersion 1.2.3)",
-					);
-				}
-				return true;
-			}, true)
 
 			.command([InitMode.Game, InitMode.Place], GAME_DESCRIPTION, {}, argv => init(argv as never, InitMode.Game))
 			.command(InitMode.Model, MODEL_DESCRIPTION, {}, argv => init(argv as never, InitMode.Model))
