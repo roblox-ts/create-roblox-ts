@@ -19,6 +19,7 @@ interface InitOptions {
 	prettier?: boolean;
 	vscode?: boolean;
 	packageManager?: PackageManager;
+	skipBuild?: boolean;
 }
 
 enum InitMode {
@@ -371,7 +372,9 @@ async function init(argv: yargs.Arguments<InitOptions>, initMode: InitMode) {
 		await fs.copy(templateDir, cwd);
 	});
 
-	await benchmark("Compiling..", () => cmd("npm run build", cwd));
+	if (!argv.skipBuild) {
+		await benchmark("Compiling..", () => cmd(selectedPackageManager.build, cwd));
+	}
 }
 
 const GAME_DESCRIPTION = "Generate a Roblox place";
@@ -391,6 +394,14 @@ export = {
 				string: true,
 				describe: "roblox-ts compiler version",
 			})
+			.check(argv => {
+				if (argv.compilerVersion !== undefined && !/^\d+\.\d+\.\d+$/.test(argv.compilerVersion)) {
+					throw new InitError(
+						"Invalid --compilerVersion. You must specify a version in the form of X.X.X. (i.e. --compilerVersion 1.2.3)",
+					);
+				}
+				return true;
+			}, true)
 			.option("dir", {
 				string: true,
 				describe: "Project directory",
@@ -420,14 +431,10 @@ export = {
 				choices: Object.values(PackageManager),
 				describe: "Choose an alternative package manager",
 			})
-			.check(argv => {
-				if (argv.compilerVersion !== undefined && !/^\d+\.\d+\.\d+$/.test(argv.compilerVersion)) {
-					throw new InitError(
-						"Invalid --compilerVersion. You must specify a version in the form of X.X.X. (i.e. --compilerVersion 1.2.3)",
-					);
-				}
-				return true;
-			}, true)
+			.option("skipBuild", {
+				boolean: true,
+				describe: "Do not run build script",
+			})
 
 			.command([InitMode.Game, InitMode.Place], GAME_DESCRIPTION, {}, argv => init(argv as never, InitMode.Game))
 			.command(InitMode.Model, MODEL_DESCRIPTION, {}, argv => init(argv as never, InitMode.Model))
