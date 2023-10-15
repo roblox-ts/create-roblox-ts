@@ -35,6 +35,7 @@ yargs
 	})
 	.parseAsync()
 	.catch(e => {
+		process.exitCode = 1;
 		if (e instanceof LoggableError) {
 			e.log();
 		} else {
