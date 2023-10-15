@@ -13,11 +13,14 @@
 	},
 	"scripts": {
 		"build": "tsc",
-		"eslint": "eslint \"src/**/*.ts\" --max-warnings 0"
+		"build-watch": "tsc -w",
+		"eslint": "eslint \"src/**/*.ts\" --max-warnings 0",
+		"devlink": "npm run build && cd devlink && npm link"
 	},
 	"dependencies": {
 		"@types/fs-extra": "^11.0.2",
 		"fs-extra": "^11.1.1",
+		"kleur": "^4.1.5",
 		"lookpath": "^1.2.2",
 		"prompts": "^2.4.2",
 		"yargs": "^17.7.2"

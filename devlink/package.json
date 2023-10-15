@@ -1,0 +1,6 @@
+{
+	"name": "create-roblox-ts-dev",
+	"bin": {
+		"create-roblox-ts-dev": "create-roblox-ts-dev.js"
+	}
+}

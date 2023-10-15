@@ -6,9 +6,13 @@ import path from "path";
 import prompts from "prompts";
 import yargs from "yargs";
 
-import { benchmark } from "./util/benchmark";
+import { RBXTS_SCOPE, TEMPLATES_DIR } from "../constants";
+import { InitError } from "../errors/InitError";
+import { benchmark } from "../util/benchmark";
 
 interface InitOptions {
+	compilerVersion?: string;
+	dir?: string;
 	yes?: boolean;
 	git?: boolean;
 	eslint?: boolean;
@@ -58,25 +62,44 @@ const packageManagerCommands: {
 	},
 };
 
-function cmd(cmdStr: string) {
+function cmd(cmdStr: string, cwd: string) {
 	return new Promise<string>((resolve, reject) => {
-		exec(cmdStr, (error, stdout) => {
+		exec(cmdStr, { cwd }, (error, stdout) => {
 			if (error) {
 				reject(error);
 			}
 			resolve(stdout);
 		});
 	}).catch((error: ExecException) => {
-		throw new Error(`Command "${error.cmd}" exited with code ${error.code}\n\n${error.message}`);
+		throw new InitError(`Command "${error.cmd}" exited with code ${error.code}\n\n${error.message}`);
 	});
 }
 
-const RBXTS_SCOPE = "@rbxts";
-const PACKAGE_ROOT = path.join(__dirname, "..");
-const TEMPLATES_DIR = path.join(PACKAGE_ROOT, "templates");
 const GIT_IGNORE = ["/node_modules", "/out", "/include", "*.tsbuildinfo"];
 
 async function init(argv: yargs.Arguments<InitOptions>, initMode: InitMode) {
+	const compilerVersion = argv.compilerVersion;
+
+	const { dir = argv.dir } = await prompts(
+		[
+			{
+				type: () => argv.dir === undefined && "text",
+				name: "dir",
+				message: "Project directory",
+			},
+		],
+		{ onCancel: () => process.exit(1) },
+	);
+
+	const cwd = path.resolve(dir);
+	if (!(await fs.pathExists(cwd))) {
+		await fs.ensureDir(cwd);
+	}
+
+	if (!(await fs.stat(cwd)).isDirectory()) {
+		throw new InitError(`${cwd} is not a directory!`);
+	}
+
 	// Detect if there are any additional package managers
 	// We don't need to prompt the user to use additional package managers if none are installed
 
@@ -160,7 +183,6 @@ async function init(argv: yargs.Arguments<InitOptions>, initMode: InitMode) {
 		{ onCancel: () => process.exit(1) },
 	);
 
-	const cwd = process.cwd();
 	const paths = {
 		packageJson: path.join(cwd, "package.json"),
 		packageLockJson: path.join(cwd, "package-lock.json"),
@@ -176,7 +198,7 @@ async function init(argv: yargs.Arguments<InitOptions>, initMode: InitMode) {
 
 	const pathValues = Object.values(paths);
 	for (const fileName of await fs.readdir(templateDir)) {
-		pathValues.push(fileName);
+		pathValues.push(path.join(cwd, fileName));
 	}
 
 	const existingPaths = new Array<string>();
@@ -184,20 +206,20 @@ async function init(argv: yargs.Arguments<InitOptions>, initMode: InitMode) {
 		if (filePath && (await fs.pathExists(filePath))) {
 			const stat = await fs.stat(filePath);
 			if (stat.isFile() || stat.isSymbolicLink() || (await fs.readdir(filePath)).length > 0) {
-				existingPaths.push(path.relative(cwd, filePath));
+				existingPaths.push(path.relative(process.cwd(), filePath));
 			}
 		}
 	}
 
 	if (existingPaths.length > 0) {
 		const pathInfo = existingPaths.map(v => `  - ${kleur.yellow(v)}\n`).join("");
-		throw new Error(`Cannot initialize project, process could overwrite:\n${pathInfo}`);
+		throw new InitError(`Cannot initialize project, process could overwrite:\n${pathInfo}`);
 	}
 
 	const selectedPackageManager = packageManagerCommands[packageManager];
 
 	await benchmark("Initializing package.json..", async () => {
-		await cmd(selectedPackageManager.init);
+		await cmd(selectedPackageManager.init, cwd);
 		const pkgJson = await fs.readJson(paths.packageJson);
 		pkgJson.scripts = {
 			build: "rbxtsc",
@@ -217,7 +239,7 @@ async function init(argv: yargs.Arguments<InitOptions>, initMode: InitMode) {
 	if (git) {
 		await benchmark("Initializing Git..", async () => {
 			try {
-				await cmd("git init");
+				await cmd("git init", cwd);
 			} catch (error) {
 				if (!(error instanceof Error)) throw error;
 				throw new Error(
@@ -229,7 +251,12 @@ async function init(argv: yargs.Arguments<InitOptions>, initMode: InitMode) {
 	}
 
 	await benchmark("Installing dependencies..", async () => {
-		const devDependencies = ["roblox-ts", "@rbxts/types", "@rbxts/compiler-types", "typescript"];
+		const devDependencies = [
+			"roblox-ts" + (compilerVersion ? `@${compilerVersion}` : ""),
+			"@rbxts/compiler-types" + (compilerVersion ? `@compiler-${compilerVersion}` : ""),
+			"@rbxts/types",
+			"typescript",
+		];
 
 		if (prettier) {
 			devDependencies.push("prettier");
@@ -247,7 +274,7 @@ async function init(argv: yargs.Arguments<InitOptions>, initMode: InitMode) {
 			}
 		}
 
-		await cmd(`${selectedPackageManager.devInstall} ${devDependencies.join(" ")}`);
+		await cmd(`${selectedPackageManager.devInstall} ${devDependencies.join(" ")}`, cwd);
 	});
 
 	if (eslint) {
@@ -341,7 +368,7 @@ async function init(argv: yargs.Arguments<InitOptions>, initMode: InitMode) {
 		await fs.copy(templateDir, cwd);
 	});
 
-	await benchmark("Compiling..", () => cmd("npm run build"));
+	await benchmark("Compiling..", () => cmd("npm run build", cwd));
 }
 
 const GAME_DESCRIPTION = "Generate a Roblox place";
@@ -353,14 +380,22 @@ const PACKAGE_DESCRIPTION = "Generate a roblox-ts npm package";
  * Defines behavior of `rbxtsc init` command.
  */
 export = {
-	command: "init",
+	command: ["$0", "init"],
 	describe: "Create a project from a template",
 	builder: () =>
 		yargs
+			.option("compilerVersion", {
+				string: true,
+				describe: "roblox-ts compiler version",
+			})
+			.option("dir", {
+				string: true,
+				describe: "Project directory",
+			})
 			.option("yes", {
 				alias: "y",
 				boolean: true,
-				describe: "recommended options",
+				describe: "Use recommended options",
 			})
 			.option("git", {
 				boolean: true,
@@ -382,6 +417,15 @@ export = {
 				choices: Object.values(PackageManager),
 				describe: "Choose an alternative package manager",
 			})
+			.check(argv => {
+				if (argv.compilerVersion !== undefined && !/^\d+\.\d+\.\d+$/.test(argv.compilerVersion)) {
+					throw new InitError(
+						"Invalid --compilerVersion. You must specify a version in the form of X.X.X. (i.e. --compilerVersion 1.2.3)",
+					);
+				}
+				return true;
+			}, true)
+
 			.command([InitMode.Game, InitMode.Place], GAME_DESCRIPTION, {}, argv => init(argv as never, InitMode.Game))
 			.command(InitMode.Model, MODEL_DESCRIPTION, {}, argv => init(argv as never, InitMode.Model))
 			.command(InitMode.Plugin, PLUGIN_DESCRIPTION, {}, argv => init(argv as never, InitMode.Plugin))
