@@ -64,14 +64,14 @@ const packageManagerCommands: {
 
 function cmd(cmdStr: string, cwd: string) {
 	return new Promise<string>((resolve, reject) => {
-		exec(cmdStr, { cwd }, (error, stdout) => {
+		exec(cmdStr, { cwd }, (error, stdout, stderr) => {
 			if (error) {
-				reject(error);
+				reject({ error, stderr });
 			}
 			resolve(stdout);
 		});
-	}).catch((error: ExecException) => {
-		throw new InitError(`Command "${error.cmd}" exited with code ${error.code}\n\n${error.message}`);
+	}).catch(({ error, stderr }: { error: ExecException; stderr: string }) => {
+		throw new InitError(`Command "${error.cmd}" exited with code ${error.code}\n\n${error.message}\n\n${stderr}`);
 	});
 }
 
