@@ -71,6 +71,7 @@ function cmd(cmdStr: string, cwd: string) {
 			resolve(stdout);
 		});
 	}).catch(({ error, stdout, stderr }: { error: ExecException; stdout: string; stderr: string }) => {
+		console.log({ error, stdout, stderr });
 		throw new InitError(
 			[`Command "${error.cmd}" exited with code ${error.code}`, error.message, stdout, stderr].join("\n\n"),
 		);
