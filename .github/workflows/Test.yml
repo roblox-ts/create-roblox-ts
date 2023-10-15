@@ -12,11 +12,18 @@ jobs:
     strategy:
       matrix:
         type: [game, place, model, plugin, package]
+        git: [true, false]
+        eslint: [true, false]
+        prettier: [true, false]
+        vscode: [true, false]
+        packageManager: [npm, yarn, pnpm]
     steps:
       - name: Checkout create-roblox-ts repo
         uses: actions/checkout@v4
         with:
           path: create-roblox-ts
+
+      - uses: pnpm/action-setup@v2
 
       - name: Setup create-roblox-ts repo
         run: |
