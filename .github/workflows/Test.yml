@@ -7,8 +7,11 @@ on:
       - master
 
 jobs:
-  test-game:
+  test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        type: [game, place, model, plugin, package]
     steps:
       - name: Checkout create-roblox-ts repo
         uses: actions/checkout@v4
@@ -20,63 +23,6 @@ jobs:
           cd create-roblox-ts
           npm install
           npm run build
-          npm link
-          echo "$(npm bin -g)" >> $GITHUB_PATH
 
-      - name: Create template game
-        run: |
-          create-roblox-ts game -y --dir project
-  test-model:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout create-roblox-ts repo
-        uses: actions/checkout@v4
-        with:
-          path: create-roblox-ts
-
-      - name: Setup create-roblox-ts repo
-        run: |
-          cd create-roblox-ts
-          npm install
-          npm run build
-          npm link
-          echo "$(npm bin -g)" >> $GITHUB_PATH
-
-      - name: Create template model
-        run: create-roblox-ts model -y --dir project
-  test-plugin:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout create-roblox-ts repo
-        uses: actions/checkout@v4
-        with:
-          path: create-roblox-ts
-
-      - name: Setup create-roblox-ts repo
-        run: |
-          cd create-roblox-ts
-          npm install
-          npm run build
-          npm link
-          echo "$(npm bin -g)" >> $GITHUB_PATH
-
-      - name: Create template plugin
-        run: create-roblox-ts plugin -y --dir project
-  test-package:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout create-roblox-ts repo
-        uses: actions/checkout@v4
-        with:
-          path: create-roblox-ts
-
-      - name: Setup create-roblox-ts repo
-        run: |
-          cd create-roblox-ts
-          npm install
-          npm run build
-          npm link
-          echo "$(npm bin -g)" >> $GITHUB_PATH
-
-      - name: Create template package
-        run: create-roblox-ts package -y --dir project
+      - name: Create template project
+        run: node ./create-roblox-ts/out/cli.js ${{ matrix.type }} -y --dir project
