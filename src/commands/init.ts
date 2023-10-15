@@ -1,4 +1,4 @@
-import { exec, ExecException } from "child_process";
+import { spawn } from "child_process";
 import fs from "fs-extra";
 import kleur from "kleur";
 import { lookpath } from "lookpath";
@@ -64,17 +64,17 @@ const packageManagerCommands: {
 
 function cmd(cmdStr: string, cwd: string) {
 	return new Promise<string>((resolve, reject) => {
-		exec(cmdStr, { cwd }, (error, stdout, stderr) => {
-			if (error) {
-				reject({ error, stderr });
-			}
-			resolve(stdout);
-		});
-	}).catch(({ error, stdout, stderr }: { error: ExecException; stdout: string; stderr: string }) => {
-		console.log({ error, stdout, stderr });
-		throw new InitError(
-			[`Command "${error.cmd}" exited with code ${error.code}`, error.message, stdout, stderr].join("\n\n"),
+		const [command, ...args] = cmdStr.split(" ");
+		const childProcess = spawn(command, args, { cwd });
+		let output = "";
+		childProcess.stdout.on("data", data => (output += data));
+		childProcess.stderr.on("data", data => (output += data));
+		childProcess.on("close", code =>
+			code === 0
+				? resolve(output)
+				: reject(new InitError(`Command "${cmdStr}" exited with code ${code}\n\n${output}`)),
 		);
+		childProcess.on("error", reject);
 	});
 }
 
