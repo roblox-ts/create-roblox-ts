@@ -70,8 +70,10 @@ function cmd(cmdStr: string, cwd: string) {
 			}
 			resolve(stdout);
 		});
-	}).catch(({ error, stderr }: { error: ExecException; stderr: string }) => {
-		throw new InitError(`Command "${error.cmd}" exited with code ${error.code}\n\n${error.message}\n\n${stderr}`);
+	}).catch(({ error, stdout, stderr }: { error: ExecException; stdout: string; stderr: string }) => {
+		throw new InitError(
+			[`Command "${error.cmd}" exited with code ${error.code}`, error.message, stdout, stderr].join("\n\n"),
+		);
 	});
 }
 
