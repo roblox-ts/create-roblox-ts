@@ -32,4 +32,11 @@ jobs:
           npm run build
 
       - name: Create template project
-        run: node ./create-roblox-ts/out/index.js ${{ matrix.type }} -y --dir project
+        run: |
+          node ./create-roblox-ts/out/index.js ${{ matrix.type }} \
+            --dir project \
+            --git=${{ matrix.git }} \
+            --eslint=${{ matrix.eslint }} \
+            --prettier=${{ matrix.prettier }} \
+            --vscode=${{ matrix.vscode }} \
+            --packageManager=${{ matrix.packageManager }}
