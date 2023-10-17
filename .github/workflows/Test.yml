@@ -8,9 +8,10 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
+        os: [ubuntu-latest, windows-latest]
         type: [game, place, model, plugin, package]
     steps:
       - name: Checkout create-roblox-ts repo
