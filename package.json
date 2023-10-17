@@ -1,7 +1,7 @@
 {
 	"name": "create-roblox-ts",
 	"description": "Create a roblox-ts project from a template",
-	"version": "2.0.2",
+	"version": "2.0.3",
 	"author": "",
 	"license": "MIT",
 	"repository": {
