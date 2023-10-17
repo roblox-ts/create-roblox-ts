@@ -66,7 +66,7 @@ const packageManagerCommands: {
 function cmd(cmdStr: string, cwd: string) {
 	return new Promise<string>((resolve, reject) => {
 		const [command, ...args] = cmdStr.split(" ");
-		const childProcess = spawn(command, args, { cwd, shell: true });
+		const childProcess = spawn(command, args, { cwd });
 		let output = "";
 		childProcess.stdout.on("data", data => (output += data));
 		childProcess.stderr.on("data", data => (output += data));
