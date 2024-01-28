@@ -236,6 +236,7 @@ async function init(argv: yargs.Arguments<InitOptions>, initMode: InitMode) {
 			pkgJson.files = ["out", "!**/*.tsbuildinfo"];
 			pkgJson.publishConfig = { access: "public" };
 			pkgJson.scripts.prepublishOnly = selectedPackageManager.build;
+			pkgJson.scripts.prepack = selectedPackageManager.build;
 		}
 		await fs.outputFile(paths.packageJson, JSON.stringify(pkgJson, null, 2));
 	});
