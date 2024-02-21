@@ -29,6 +29,7 @@ enum InitMode {
 	Model = "model",
 	Plugin = "plugin",
 	Package = "package",
+	LuauPackage = "luau-package",
 }
 
 enum PackageManager {
@@ -77,6 +78,14 @@ function cmd(cmdStr: string, cwd: string) {
 		);
 		childProcess.on("error", reject);
 	});
+}
+
+function shouldHaveDefaultScripts(template: InitMode) {
+	return template !== InitMode.LuauPackage;
+}
+
+function isPackageTemplate(template: InitMode): template is InitMode.Package | InitMode.LuauPackage {
+	return template === InitMode.Package || template === InitMode.LuauPackage;
 }
 
 const GIT_IGNORE = ["/node_modules", "/out", "/include", "*.tsbuildinfo"];
@@ -141,10 +150,12 @@ async function init(argv: yargs.Arguments<InitOptions>, initMode: InitMode) {
 				type: () => initMode === InitMode.None && "select",
 				name: "template",
 				message: "Select template",
-				choices: [InitMode.Game, InitMode.Model, InitMode.Plugin, InitMode.Package].map(value => ({
-					title: value,
-					value,
-				})),
+				choices: [InitMode.Game, InitMode.Model, InitMode.Plugin, InitMode.Package, InitMode.LuauPackage].map(
+					value => ({
+						title: value,
+						value,
+					}),
+				),
 				initial: 0,
 			},
 			{
@@ -225,18 +236,32 @@ async function init(argv: yargs.Arguments<InitOptions>, initMode: InitMode) {
 	await benchmark("Initializing package.json..", async () => {
 		await cmd(selectedPackageManager.init, cwd);
 		const pkgJson = await fs.readJson(paths.packageJson);
-		pkgJson.scripts = {
-			build: "rbxtsc",
-			watch: "rbxtsc -w",
-		};
-		if (template === InitMode.Package) {
+
+		if (shouldHaveDefaultScripts(template)) {
+			pkgJson.scripts = {
+				build: "rbxtsc",
+				watch: "rbxtsc -w",
+			};
+		} else {
+			pkgJson.scripts = undefined;
+		}
+
+		if (isPackageTemplate(template)) {
 			pkgJson.name = RBXTS_SCOPE + "/" + pkgJson.name;
+			pkgJson.publishConfig = { access: "public" };
+		}
+
+		if (template === InitMode.LuauPackage) {
+			pkgJson.main = "src/init.lua";
+			pkgJson.types = "src/index.d.ts";
+			pkgJson.files = ["src"];
+		} else if (template === InitMode.Package) {
 			pkgJson.main = "out/init.lua";
 			pkgJson.types = "out/index.d.ts";
 			pkgJson.files = ["out", "!**/*.tsbuildinfo"];
-			pkgJson.publishConfig = { access: "public" };
 			pkgJson.scripts.prepublishOnly = selectedPackageManager.build;
 		}
+
 		await fs.outputFile(paths.packageJson, JSON.stringify(pkgJson, null, 2));
 	});
 
@@ -256,11 +281,14 @@ async function init(argv: yargs.Arguments<InitOptions>, initMode: InitMode) {
 
 	await benchmark("Installing dependencies..", async () => {
 		const devDependencies = [
-			"roblox-ts" + (compilerVersion ? `@${compilerVersion}` : ""),
 			"@rbxts/compiler-types" + (compilerVersion ? `@compiler-${compilerVersion}` : ""),
 			"@rbxts/types",
-			"typescript",
 		];
+
+		if (template !== InitMode.LuauPackage) {
+			devDependencies.push("roblox-ts" + (compilerVersion ? `@${compilerVersion}` : ""));
+			devDependencies.push("typescript");
+		}
 
 		if (prettier) {
 			devDependencies.push("prettier");
@@ -372,7 +400,7 @@ async function init(argv: yargs.Arguments<InitOptions>, initMode: InitMode) {
 		await fs.copy(templateDir, cwd);
 	});
 
-	if (!argv.skipBuild) {
+	if (template !== InitMode.LuauPackage && !argv.skipBuild) {
 		await benchmark("Compiling..", () => cmd(selectedPackageManager.build, cwd));
 	}
 }
@@ -381,6 +409,7 @@ const GAME_DESCRIPTION = "Generate a Roblox place";
 const MODEL_DESCRIPTION = "Generate a Roblox model";
 const PLUGIN_DESCRIPTION = "Generate a Roblox Studio plugin";
 const PACKAGE_DESCRIPTION = "Generate a roblox-ts npm package";
+const LUAU_PACKAGE_DESCRIPTION = "Generate an npm package for Luau code";
 
 /**
  * Defines behavior of `rbxtsc init` command.
@@ -439,7 +468,10 @@ export = {
 			.command([InitMode.Game, InitMode.Place], GAME_DESCRIPTION, {}, argv => init(argv as never, InitMode.Game))
 			.command(InitMode.Model, MODEL_DESCRIPTION, {}, argv => init(argv as never, InitMode.Model))
 			.command(InitMode.Plugin, PLUGIN_DESCRIPTION, {}, argv => init(argv as never, InitMode.Plugin))
-			.command(InitMode.Package, PACKAGE_DESCRIPTION, {}, argv => init(argv as never, InitMode.Package)),
+			.command(InitMode.Package, PACKAGE_DESCRIPTION, {}, argv => init(argv as never, InitMode.Package))
+			.command(InitMode.LuauPackage, LUAU_PACKAGE_DESCRIPTION, {}, argv =>
+				init(argv as never, InitMode.LuauPackage),
+			),
 	handler: argv => init(argv, InitMode.None),
 	// eslint-disable-next-line @typescript-eslint/ban-types
 } satisfies yargs.CommandModule<{}, InitOptions>;
