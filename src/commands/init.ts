@@ -254,7 +254,7 @@ async function init(argv: yargs.Arguments<InitOptions>, initMode: InitMode) {
 		if (template === InitMode.LuauPackage) {
 			pkgJson.main = "src/init.lua";
 			pkgJson.types = "src/index.d.ts";
-			pkgJson.files = ["src/*"];
+			pkgJson.files = ["src"];
 		} else if (template === InitMode.Package) {
 			pkgJson.main = "out/init.lua";
 			pkgJson.types = "out/index.d.ts";
