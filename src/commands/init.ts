@@ -80,6 +80,14 @@ function cmd(cmdStr: string, cwd: string) {
 	});
 }
 
+function shouldHaveDefaultScripts(template: InitMode) {
+	return template !== InitMode.LuauPackage;
+}
+
+function isPackageTemplate(template: InitMode): template is InitMode.Package | InitMode.LuauPackage {
+	return template === InitMode.Package || template === InitMode.LuauPackage;
+}
+
 const GIT_IGNORE = ["/node_modules", "/out", "/include", "*.tsbuildinfo"];
 
 async function init(argv: yargs.Arguments<InitOptions>, initMode: InitMode) {
@@ -229,29 +237,28 @@ async function init(argv: yargs.Arguments<InitOptions>, initMode: InitMode) {
 		await cmd(selectedPackageManager.init, cwd);
 		const pkgJson = await fs.readJson(paths.packageJson);
 
-		if (template === InitMode.LuauPackage) {
-			pkgJson.scripts = undefined;
-		} else {
+		if (shouldHaveDefaultScripts(template)) {
 			pkgJson.scripts = {
 				build: "rbxtsc",
 				watch: "rbxtsc -w",
 			};
+		} else {
+			pkgJson.scripts = undefined;
+		}
+
+		if (isPackageTemplate(template)) {
+			pkgJson.name = RBXTS_SCOPE + "/" + pkgJson.name;
+			pkgJson.publishConfig = { access: "public" };
 		}
 
 		if (template === InitMode.LuauPackage) {
-			pkgJson.name = RBXTS_SCOPE + "/" + pkgJson.name;
-			pkgJson.main = "lib/init.lua";
-			pkgJson.types = "lib/index.d.ts";
-			pkgJson.files = ["lib/init.lua", "lib/index.d.ts"];
-			pkgJson.publishConfig = { access: "public" };
-		}
-
-		if (template === InitMode.Package) {
-			pkgJson.name = RBXTS_SCOPE + "/" + pkgJson.name;
+			pkgJson.main = "src/init.lua";
+			pkgJson.types = "src/index.d.ts";
+			pkgJson.files = ["src/*"];
+		} else if (template === InitMode.Package) {
 			pkgJson.main = "out/init.lua";
 			pkgJson.types = "out/index.d.ts";
 			pkgJson.files = ["out", "!**/*.tsbuildinfo"];
-			pkgJson.publishConfig = { access: "public" };
 			pkgJson.scripts.prepublishOnly = selectedPackageManager.build;
 		}
 

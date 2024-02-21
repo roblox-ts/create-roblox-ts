@@ -18,6 +18,6 @@
 		"declaration": false,
 
 		// configurable
-		"rootDir": "lib"
+		"rootDir": "src"
 	}
 }
