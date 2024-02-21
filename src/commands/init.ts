@@ -409,6 +409,7 @@ const GAME_DESCRIPTION = "Generate a Roblox place";
 const MODEL_DESCRIPTION = "Generate a Roblox model";
 const PLUGIN_DESCRIPTION = "Generate a Roblox Studio plugin";
 const PACKAGE_DESCRIPTION = "Generate a roblox-ts npm package";
+const LUAU_PACKAGE_DESCRIPTION = "Generate an npm package for Luau code";
 
 /**
  * Defines behavior of `rbxtsc init` command.
@@ -467,7 +468,10 @@ export = {
 			.command([InitMode.Game, InitMode.Place], GAME_DESCRIPTION, {}, argv => init(argv as never, InitMode.Game))
 			.command(InitMode.Model, MODEL_DESCRIPTION, {}, argv => init(argv as never, InitMode.Model))
 			.command(InitMode.Plugin, PLUGIN_DESCRIPTION, {}, argv => init(argv as never, InitMode.Plugin))
-			.command(InitMode.Package, PACKAGE_DESCRIPTION, {}, argv => init(argv as never, InitMode.Package)),
+			.command(InitMode.Package, PACKAGE_DESCRIPTION, {}, argv => init(argv as never, InitMode.Package))
+			.command(InitMode.LuauPackage, LUAU_PACKAGE_DESCRIPTION, {}, argv =>
+				init(argv as never, InitMode.LuauPackage),
+			),
 	handler: argv => init(argv, InitMode.None),
 	// eslint-disable-next-line @typescript-eslint/ban-types
 } satisfies yargs.CommandModule<{}, InitOptions>;
