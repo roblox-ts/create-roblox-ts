@@ -29,6 +29,7 @@ enum InitMode {
 	Model = "model",
 	Plugin = "plugin",
 	Package = "package",
+	LuauPackage = "luau-package",
 }
 
 enum PackageManager {
@@ -141,10 +142,12 @@ async function init(argv: yargs.Arguments<InitOptions>, initMode: InitMode) {
 				type: () => initMode === InitMode.None && "select",
 				name: "template",
 				message: "Select template",
-				choices: [InitMode.Game, InitMode.Model, InitMode.Plugin, InitMode.Package].map(value => ({
-					title: value,
-					value,
-				})),
+				choices: [InitMode.Game, InitMode.Model, InitMode.Plugin, InitMode.Package, InitMode.LuauPackage].map(
+					value => ({
+						title: value,
+						value,
+					}),
+				),
 				initial: 0,
 			},
 			{
@@ -225,10 +228,24 @@ async function init(argv: yargs.Arguments<InitOptions>, initMode: InitMode) {
 	await benchmark("Initializing package.json..", async () => {
 		await cmd(selectedPackageManager.init, cwd);
 		const pkgJson = await fs.readJson(paths.packageJson);
-		pkgJson.scripts = {
-			build: "rbxtsc",
-			watch: "rbxtsc -w",
-		};
+
+		if (template === InitMode.LuauPackage) {
+			pkgJson.scripts = undefined;
+		} else {
+			pkgJson.scripts = {
+				build: "rbxtsc",
+				watch: "rbxtsc -w",
+			};
+		}
+
+		if (template === InitMode.LuauPackage) {
+			pkgJson.name = RBXTS_SCOPE + "/" + pkgJson.name;
+			pkgJson.main = "lib/init.lua";
+			pkgJson.types = "lib/index.d.ts";
+			pkgJson.files = ["lib/init.lua", "lib/index.d.ts"];
+			pkgJson.publishConfig = { access: "public" };
+		}
+
 		if (template === InitMode.Package) {
 			pkgJson.name = RBXTS_SCOPE + "/" + pkgJson.name;
 			pkgJson.main = "out/init.lua";
@@ -237,6 +254,7 @@ async function init(argv: yargs.Arguments<InitOptions>, initMode: InitMode) {
 			pkgJson.publishConfig = { access: "public" };
 			pkgJson.scripts.prepublishOnly = selectedPackageManager.build;
 		}
+
 		await fs.outputFile(paths.packageJson, JSON.stringify(pkgJson, null, 2));
 	});
 
@@ -256,11 +274,14 @@ async function init(argv: yargs.Arguments<InitOptions>, initMode: InitMode) {
 
 	await benchmark("Installing dependencies..", async () => {
 		const devDependencies = [
-			"roblox-ts" + (compilerVersion ? `@${compilerVersion}` : ""),
 			"@rbxts/compiler-types" + (compilerVersion ? `@compiler-${compilerVersion}` : ""),
 			"@rbxts/types",
-			"typescript",
 		];
+
+		if (template !== InitMode.LuauPackage) {
+			devDependencies.push("roblox-ts" + (compilerVersion ? `@${compilerVersion}` : ""));
+			devDependencies.push("typescript");
+		}
 
 		if (prettier) {
 			devDependencies.push("prettier");
@@ -372,7 +393,7 @@ async function init(argv: yargs.Arguments<InitOptions>, initMode: InitMode) {
 		await fs.copy(templateDir, cwd);
 	});
 
-	if (!argv.skipBuild) {
+	if (template !== InitMode.LuauPackage && !argv.skipBuild) {
 		await benchmark("Compiling..", () => cmd(selectedPackageManager.build, cwd));
 	}
 }
