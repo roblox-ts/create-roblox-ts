@@ -63,10 +63,10 @@ const packageManagerCommands: {
 		build: "pnpm run build",
 	},
 	[PackageManager.Bun]: {
-		init: "bun init -y && rm -rf index.ts .gitignore tsconfig.json README.md",
+		init: "bun init -y",
 		devInstall: "bun install --silent -D",
 		build: "bun run build",
-	}
+	},
 };
 
 function cmd(cmdStr: string, cwd: string) {
@@ -123,7 +123,7 @@ async function init(argv: yargs.Arguments<InitOptions>, initMode: InitMode) {
 		[PackageManager.NPM]: npmAvailable,
 		[PackageManager.PNPM]: pnpmAvailable,
 		[PackageManager.Yarn]: yarnAvailable,
-		[PackageManager.Bun]: bunAvailable
+		[PackageManager.Bun]: bunAvailable,
 	};
 
 	const packageManagerCount = Object.values(packageManagerExistance).filter(exists => exists).length;
@@ -231,6 +231,10 @@ async function init(argv: yargs.Arguments<InitOptions>, initMode: InitMode) {
 
 	await benchmark("Initializing package.json..", async () => {
 		await cmd(selectedPackageManager.init, cwd);
+		if (selectedPackageManager === packageManagerCommands.bun) {
+			await fs.remove(`${cwd}/index.ts`);
+			await fs.remove(`${cwd}/README.md`);
+		}
 		const pkgJson = await fs.readJson(paths.packageJson);
 		pkgJson.scripts = {
 			build: "rbxtsc",
