@@ -63,7 +63,7 @@ const packageManagerCommands: {
 		build: "pnpm run build",
 	},
 	[PackageManager.Bun]: {
-		init: "bun init",
+		init: "bun init -y && rm -rf index.ts .gitignore tsconfig.json README.md",
 		devInstall: "bun install --silent -D",
 		build: "bun run build",
 	}
