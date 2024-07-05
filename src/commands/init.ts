@@ -229,6 +229,11 @@ async function init(argv: yargs.Arguments<InitOptions>, initMode: InitMode) {
 			build: "rbxtsc",
 			watch: "rbxtsc -w",
 		};
+		pkgJson.devDependencies = {
+			// Special-cased here to set the version spec to "latest"
+			// Other dependencies are installed via the shell below
+			"@rbxts/types": "latest"
+		};
 		if (template === InitMode.Package) {
 			pkgJson.name = RBXTS_SCOPE + "/" + pkgJson.name;
 			pkgJson.main = "out/init.lua";
@@ -258,7 +263,6 @@ async function init(argv: yargs.Arguments<InitOptions>, initMode: InitMode) {
 		const devDependencies = [
 			"roblox-ts" + (compilerVersion ? `@${compilerVersion}` : ""),
 			"@rbxts/compiler-types" + (compilerVersion ? `@compiler-${compilerVersion}` : ""),
-			"@rbxts/types",
 			"typescript",
 		];
 
