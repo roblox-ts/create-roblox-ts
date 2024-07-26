@@ -57,7 +57,7 @@ const packageManagerCommands: {
 		build: "yarn run build",
 	},
 	[PackageManager.PNPM]: {
-		init: "pnpm init",
+		init: "pnpm init && echo node-linker=hoisted > .npmrc",
 		devInstall: "pnpm install --silent -D",
 		build: "pnpm run build",
 	},
