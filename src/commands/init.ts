@@ -35,6 +35,7 @@ enum PackageManager {
 	NPM = "npm",
 	Yarn = "yarn",
 	PNPM = "pnpm",
+	Bun = "bun",
 }
 
 interface PackageManagerCommands {
@@ -60,6 +61,11 @@ const packageManagerCommands: {
 		init: "pnpm init",
 		devInstall: "pnpm install --silent -D",
 		build: "pnpm run build",
+	},
+	[PackageManager.Bun]: {
+		init: "bun init -y",
+		devInstall: "bun install --silent -D",
+		build: "bun run build",
 	},
 };
 
@@ -109,14 +115,15 @@ async function init(argv: yargs.Arguments<InitOptions>, initMode: InitMode) {
 
 	// Although npm is installed by default, it can be uninstalled
 	// and replaced by another manager, so check for it to make sure
-	const [npmAvailable, pnpmAvailable, yarnAvailable, gitAvailable] = (
-		await Promise.allSettled(["npm", "pnpm", "yarn", "git"].map(v => lookpath(v)))
+	const [npmAvailable, pnpmAvailable, yarnAvailable, bunAvailable, gitAvailable] = (
+		await Promise.allSettled(["npm", "pnpm", "yarn", "bun", "git"].map(v => lookpath(v)))
 	).map(v => (v.status === "fulfilled" ? v.value !== undefined : true));
 
 	const packageManagerExistance: { [K in PackageManager]: boolean } = {
 		[PackageManager.NPM]: npmAvailable,
 		[PackageManager.PNPM]: pnpmAvailable,
 		[PackageManager.Yarn]: yarnAvailable,
+		[PackageManager.Bun]: bunAvailable,
 	};
 
 	const packageManagerCount = Object.values(packageManagerExistance).filter(exists => exists).length;
@@ -224,6 +231,10 @@ async function init(argv: yargs.Arguments<InitOptions>, initMode: InitMode) {
 
 	await benchmark("Initializing package.json..", async () => {
 		await cmd(selectedPackageManager.init, cwd);
+		if (selectedPackageManager === packageManagerCommands.bun) {
+			await fs.remove(`${cwd}/index.ts`);
+			await fs.remove(`${cwd}/README.md`);
+		}
 		const pkgJson = await fs.readJson(paths.packageJson);
 		pkgJson.scripts = {
 			build: "rbxtsc",
