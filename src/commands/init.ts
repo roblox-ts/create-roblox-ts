@@ -297,7 +297,7 @@ async function init(argv: yargs.Arguments<InitOptions>, initMode: InitMode) {
 				extends: [
 					"eslint:recommended",
 					"plugin:@typescript-eslint/recommended",
-					"plugin:roblox-ts/recommended",
+					"plugin:roblox-ts/recommended-legacy",
 				],
 				rules: {} as { [index: string]: unknown },
 			};
