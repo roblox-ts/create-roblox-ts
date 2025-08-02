@@ -297,7 +297,7 @@ async function init(argv: yargs.Arguments<InitOptions>, initMode: InitMode) {
 				extends: [
 					"eslint:recommended",
 					"plugin:@typescript-eslint/recommended",
-					"plugin:roblox-ts/recommended",
+					"plugin:roblox-ts/recommended-legacy",
 				],
 				rules: {} as { [index: string]: unknown },
 			};
@@ -347,6 +347,7 @@ async function init(argv: yargs.Arguments<InitOptions>, initMode: InitMode) {
 					},
 					"eslint.run": "onType",
 					"eslint.format.enable": true,
+					"eslint.useFlatConfig": false,
 				});
 			} else if (prettier) {
 				// no eslint but still prettier
