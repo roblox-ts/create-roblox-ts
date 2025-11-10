@@ -331,6 +331,7 @@ async function init(argv: yargs.Arguments<InitOptions>, initMode: InitMode) {
 			};
 			const settings = {
 				"typescript.tsdk": "node_modules/typescript/lib",
+				"typescript.enablePromptUseWorkspaceTsdk": true,
 				"files.eol": "\n",
 			};
 
