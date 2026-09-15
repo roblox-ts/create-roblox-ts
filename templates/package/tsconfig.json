@@ -18,10 +18,12 @@
 		"typeRoots": ["node_modules/@rbxts"],
 
 		// configurable
+		"types": ["types"],
 		"rootDir": "src",
 		"outDir": "out",
 		"incremental": true,
 		"tsBuildInfoFile": "out/tsconfig.tsbuildinfo",
 		"declaration": true
-	}
+	},
+	"exclude": ["out", "node_modules", "eslint.config.ts"]
 }

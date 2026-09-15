@@ -24,5 +24,6 @@
 		"baseUrl": "src",
 		"incremental": true,
 		"tsBuildInfoFile": "out/tsconfig.tsbuildinfo"
-	}
+	},
+	"exclude": ["out", "node_modules", "eslint.config.ts"]
 }
